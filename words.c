@@ -25,9 +25,9 @@ Words *create_words(int k, int d) {
     words->possible_indexes = malloc(d * 2 * sizeof(Index)); // Allocate memory for the possible indexes
     for (int i = 0; i < d; i++) {
         words->possible_indexes[2*i].i = i;
-        words->possible_indexes[2*i].head = true;
+        words->possible_indexes[2*i].head = false;
         words->possible_indexes[2*i + 1].i = i;
-        words->possible_indexes[2*i + 1].head = false;
+        words->possible_indexes[2*i + 1].head = true;
     }
     if (words->combinations == NULL) {
         free(words);
@@ -71,7 +71,9 @@ void generate_combinations(Words *words) {
         for (int i=first;i<last;i++){
             for (int j = 0;j<2*words->d;j++){
                 words->combinations[index] = add_index(words->combinations[i], &words->possible_indexes[j]);
-                words->combinations[index]->prev_word_index = i;
+                words->combinations[index]->prev_word_index = (int) i;
+                printf("Prev word index is %d\n", words->combinations[index]->prev_word_index);
+                printf("Prev word index is in %p\n", & words->combinations[index]->prev_word_index);
                 index++;
             }
         }
@@ -84,7 +86,7 @@ void generate_combinations(Words *words) {
         print_word(*words->combinations[i]);
     }
 
-printf("So long everything is fine if any errors from here on not our fault\n");
+//printf("So long everything is fine if any errors from here on not our fault\n");
     
 }
 unsigned long long factorial(int n) { // Calculate factorial
@@ -98,11 +100,14 @@ unsigned long long combinatory(int n, int k) { // Calculate combinatory number
     return factorial(n) / (factorial(k) * factorial(n - k));
 }
 void print_word(Word word){
+    printf("\'");
+    
     for(int i = 0; i<word.length; i++){
         //printf(" **This index is on address %p**", word.indexes[i] );
         printf("%d", word.indexes[i]->i);
-        printf("%s", word.indexes[i]->head ? "+" : "-");
+        printf("%s", word.indexes[i]->head ? "-" : "+");
     }
+    printf("\' ");
     printf("\n");
 };
 Word* add_index(Word *word, Index *index){ // Creates new word from indexes from previous word

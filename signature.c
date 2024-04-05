@@ -2,7 +2,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include "signature.h"
-
+#include <stdbool.h>    
 Signature *create_signature(int k, Data *data) {
     Signature *signature = malloc(sizeof(Signature));
     if (signature == NULL) {
@@ -21,7 +21,7 @@ Signature *create_signature(int k, Data *data) {
         return NULL;
     }
     generate_combinations(signature->words); // Generate all possible combinations
-    printf("Number of combinations: %d\n", signature->words->num_combinations);
+    
     signature->elements = (SignatureElement **) malloc(signature->words->num_combinations * sizeof(SignatureElement *));
 
     init_all_signature_elements(signature); // Initialize all signature elements
@@ -71,8 +71,8 @@ double* calculate_signature(Signature *signature, int m, int n) {
     printf("Number of combinations: %d\n", signature->words->num_combinations);
    for(int i = 0; i<signature->words->num_combinations;i++){
         printf("Element %d ", i);
-        print_word(*signature->elements[i]->word); printf("-popopopop");
-        sig[i] = signature_helper(signature,m,n,signature->elements[i]);
+        print_word(*signature->elements[i]->word); printf("Value: ");
+        sig[i] = signature_helper(signature,n,signature->elements[i]);
         printf(" %f\t", sig[i]);   printf("\n");
    }
    printf("\n");
@@ -80,30 +80,48 @@ double* calculate_signature(Signature *signature, int m, int n) {
 
 }
 
-double signature_helper(Signature *signature, int m, int n,SignatureElement *element)
-{   if(element->word->length == 0){
+double signature_helper(Signature *signature, int n,SignatureElement *element)
+{   
+    printf("Calculating for position %d  and word ",n);
+    print_word(*element->word);
+
+    
+    if(element->word->length == 0){
         return 1;
     }
-    if(element->is_calculated[m][n]){
-        return element->value[m][n];
+    printf("Checking if calculated : %s\n", element->is_calculated[n] ? "true" : "false");
+    if(element->is_calculated[n]){
+
+        printf("Word: ");
+        print_word(*element->word);
+        printf("Already calculated for position %d and has value %f\n",n,element->value[n]);
+        return element->value[n];
     }
     
-    if (m == n) {
-        element->value[m][n] = 1;
-        element->is_calculated[m][n] = true;
+    if (n==0) {
+        element->value[n] = 1;
+        element->is_calculated[n] = true;
         return 1;
     }
+
     Word *word = element->word;
+    printf("Current word: ");
+    print_word(*word);
+    printf("\nPrevious word index: %d\n", word->prev_word_index);
     SignatureElement * prev_element = signature->elements[word->prev_word_index];
+    printf("Previous word: ");
+    print_word(*prev_element->word);
     if (word->indexes[word->length - 1]->head) { // If the last index is a head
-        element->value[m][n] = signature->delta_mu[n-1] * (signature_helper(signature,m,n-1,element) + 
-                                signature->data->delta_X[n-1][word->indexes[word->length - 1]->i] * signature_helper(signature,m,n-1,prev_element));
-        element->is_calculated[m][n] = true;
-        return element->value[m][n];
+        printf("Head\n");
+        element->value[n] = signature->delta_mu[n-1] * (signature_helper(signature,n-1,element) + 
+                                signature->data->delta_X[n-1][word->indexes[word->length - 1]->i] * signature_helper(signature,n-1,prev_element));
+        element->is_calculated[n] = true;
+        return element->value[n];
     } else {
-        element->value[m][n] = signature->delta_mu[n-1] * signature_helper(signature,m,n-1,element) + signature->data->delta_X[n-1][word->indexes[word->length - 1]->i] * signature_helper(signature,m,n,prev_element);
-        element->is_calculated[m][n] = true;
-        return element->value[m][n];
+        printf("Tail\n");
+        element->value[n] = signature->delta_mu[n-1] * signature_helper(signature,n-1,element) + signature->data->delta_X[n-1][word->indexes[word->length - 1]->i] * signature_helper(signature,n,prev_element);
+        element->is_calculated[n] = true;
+        return element->value[n];
 
     }
 
