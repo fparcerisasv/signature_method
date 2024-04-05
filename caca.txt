@@ -1,0 +1,245 @@
+signature.h:
+
+#ifndef SIGNATURE_H
+#define SIGNATURE_H
+
+#include "data.h"
+#include "words.h"
+
+typedef struct {
+    int k;
+    Data *data;
+    double mu;
+    double *delta_mu;
+    Words *words;
+    double ***sig;
+} Signature;
+
+Signature *create_signature(int k, Data *data);
+void set_mu(Signature *signature, double mu);
+void set_delta_mu(Signature *signature);
+void calculate_signature(Signature *signature, int m, int n);
+
+#endif
+
+
+-----------------
+
+
+
+singarure.c:
+
+// signature.c
+
+#include <math.h>
+#include <stdlib.h>
+#include <stdio.h>
+
+#include "signature.h"
+#include "data.h"
+#include "words.h"
+
+
+
+
+Signature *create_signature(int k, Data *data) {
+    Signature *signature = malloc(sizeof(Signature));
+    if (signature == NULL) {
+        return NULL;
+    }
+    signature->k = k;
+    signature->data = data;
+    signature->mu = 0;
+    signature->delta_mu = NULL;
+    signature->combinations = NULL;
+    signature->sig = NULL;
+    return signature;
+}
+
+void set_mu(Signature *signature, double mu) {
+    signature->mu = mu;
+}
+
+void set_delta_mu(Signature *signature) {
+    int num_times = signature->data->num_times;
+    signature->delta_mu = malloc((num_times - 1) * sizeof(double));
+    if (signature->delta_mu == NULL) {
+        return;
+    }
+    for (int n = 1; n < num_times; n++) {
+        signature->delta_mu[n - 1] = exp(-signature->mu * (signature->data->times[n] - signature->data->times[n - 1]));
+    }
+}
+
+void calculate_signature(Signature *signature, int m, int n) {
+    printf("Signature for %d and %d\n", m, n);
+    if (signature->delta_mu == NULL) {
+        printf("Error: Delta mu is not set.\n");
+        return;
+    }
+
+    Words *words = create_words(signature->k, signature->data->d);
+    printf("Words created\n");
+    if (words == NULL) {
+        printf("Error: Unable to create Words.\n");
+        return;
+    }
+    generate_combinations(words);
+    printf("Combinations generated\n");
+    signature->combinations = words->combinations;
+
+    signature->sig = malloc(words->num_combinations * sizeof(double **));
+    if (signature->sig == NULL) {
+        printf("Error: Unable to allocate memory for signature.\n");
+        return;
+    }
+
+    for (int k = 0; k < words->num_combinations; k++) {
+        signature->sig[k] = malloc(signature->data->num_times * sizeof(double *));
+        if (signature->sig[k] == NULL) {
+            printf("Error: Unable to allocate memory for signature.\n");
+            return;
+        }
+        for (int i = 0; i < signature->data->num_times; i++) {
+            signature->sig[k][i] = malloc(signature->data->num_times * sizeof(double));
+            if (signature->sig[k][i] == NULL) {
+                printf("Error: Unable to allocate memory for signature.\n");
+                return;
+            }
+            for (int j = 0; j < signature->data->num_times; j++) {
+                signature->sig[k][i][j] = 0; // Initialize to 0
+            }
+        }
+    }
+    printf("Memory allocated for signature\n");
+
+    for (int k = 0; k < words->num_combinations; k++) {
+        for (int i = 0; i < signature->data->num_times; i++) {
+            for (int j = i + 1; j < signature->data->num_times; j++) {
+                double sum = 0.0;
+                for (int t = 0; signature->combinations[k][t] != '\0'; t += 2) {
+                    int word_index = signature->combinations[k][t] - '0';
+                    char sign = signature->combinations[k][t + 1];
+                    double term;
+                    if (sign == '+') {
+                        term = signature->data->values[j - 1][word_index] + signature->data->values[j - 1][word_index];
+                    } else {
+                        term = signature->data->values[j - 1][word_index] + signature->data->values[j - 1][word_index];
+                    }
+                    sum += term;
+                }
+                signature->sig[k][i][j] = signature->delta_mu[j - 1] * sum;
+            }
+        }
+    }
+    printf("Signature calculated\n");
+
+    // Free dynamically allocated memory for words
+    for (int i = 0; i < words->num_combinations; i++) {
+        free(words->combinations[i]);
+    }
+    free(words->combinations);
+    free(words);
+}
+
+
+
+(.venv) C:\Users\fparc\OneDrive\Escriptori\TFG - MATESSSSS\codis>python main.py 
+Creating data
+Signature for 0 and 3
+Number of combinations: 21
+Generating combinations for length 0
+
+Saving word:
+From address 000000D9CEFEEC20
+To address 0000026229D4B3E0
+Saved word:
+Index: 0
+Generating combinations for length 1
+
+Previous word:
+Adding index 0 -
+Successfully created new word
+First address of previous word 000002622A2D1540
+First address of new word 000002622A2D1540
+Address of new index 000002621A21A070
+New word: 0-
+
+Previous word:
+Adding index 0 +
+Successfully created new word
+First address of previous word 000002622A2D1540
+First address of new word 000002622A2D1540
+Address of new index 000002621A21A070
+New word: 0+
+
+Saving word:0+
+From address 000000D9CEFEEBB0
+To address 0000026229D4B3F0
+Saved word:0+
+Index: 1
+
+Saving word:0+
+From address 000000D9CEFEEBA0
+To address 0000026229D4B400
+Saved word:0+
+Index: 2
+
+Previous word:
+Adding index 1 -
+Successfully created new word
+First address of previous word 000002622A2D1540
+First address of new word 000002622A2D1540
+Address of new index 000002621A21A070
+New word: 1-
+
+Previous word:
+Adding index 1 +
+Successfully created new word
+First address of previous word 000002622A2D1540
+First address of new word 000002622A2D1540
+Address of new index 000002621A21A070
+New word: 1+
+
+Saving word:1+
+From address 000000D9CEFEEBB0
+To address 0000026229D4B410
+Saved word:1+
+Index: 3
+
+Saving word:1+
+From address 000000D9CEFEEBA0
+To address 0000026229D4B420
+Saved word:1+
+Index: 4
+Generating combinations for length 2
+
+Previous word:
+Adding index 0 -
+Successfully created new word
+First address of previous word 000002622A2D1540
+First address of new word 000002622A2D1540
+Address of new index 000002621A21A070
+New word: 0-
+
+Previous word:
+Adding index 0 +
+Successfully created new word
+First address of previous word 000002622A2D1540
+First address of new word 000002622A2D1540
+Address of new index 000002621A21A070
+New word: 0+
+
+Previous word: 0+
+Adding index 0 -
+Successfully created new word
+First address of previous word 000002622A2D1540
+First address of new word 000002622A2D1540
+Traceback (most recent call last):
+  File "C:\Users\fparc\OneDrive\Escriptori\TFG - MATESSSSS\codis\main.py", line 20, in <module>
+    sw.calculate_signature(signature, 0, 3)
+  File "C:\Users\fparc\OneDrive\Escriptori\TFG - MATESSSSS\codis\classes_sig_c.py", line 87, in calculate_signature
+    signature_lib.calculate_signature(signature, m, n)
+OSError: exception: access violation reading 0xFFFFFFFFFFFFFFFF
+
+(.venv) C:\Users\fparc\OneDrive\Escriptori\TFG - MATESSSSS\codis>
