@@ -4,8 +4,7 @@ import ctypes
 import numpy as np
 
 # Load the shared library
-signature_lib = ctypes.CDLL('./signature.so')
-
+signature_lib = ctypes.CDLL('./discrete_signature_lib/c/signature.so')
 # Define structures for Data and Signature
 class Data(ctypes.Structure):
     _fields_ = [
@@ -18,11 +17,11 @@ class Data(ctypes.Structure):
 class Signature(ctypes.Structure):
     _fields_ = [
         ('k', ctypes.c_int),
+        ('d', ctypes.c_int),
+        ('num_combinations', ctypes.c_int),
         ('data', Data),
         ('mu', ctypes.c_double),
         ('delta_mu', ctypes.POINTER(ctypes.c_double)),
-        ('iscomputed', ctypes.POINTER(ctypes.c_bool)),
-        ('words', ctypes.POINTER(ctypes.c_char_p)),
         ('sig', ctypes.POINTER(ctypes.POINTER(ctypes.POINTER(ctypes.c_double))))
     ]
 
@@ -49,7 +48,7 @@ signature_lib.set_delta_mu.argtypes = [ctypes.POINTER(Signature)]
 signature_lib.set_delta_mu.restype = None
 
 signature_lib.calculate_signature.argtypes = [ctypes.POINTER(Signature), ctypes.c_int, ctypes.c_int]
-signature_lib.calculate_signature.restype = ctypes.POINTER(ctypes.POINTER(ctypes.c_double))
+signature_lib.calculate_signature.restype = ctypes.POINTER(ctypes.c_double)
 
 
 # Define wrapper functions for Data and Signature classes
@@ -68,10 +67,6 @@ def set_values(data, values):
     # Pass the array of arrays of doubles to the C function
     signature_lib.set_values(data, c_values)
 
-
-
-
-
 def calculate_delta_X(data):
     return signature_lib.calculate_delta_X(data)
 
@@ -85,4 +80,5 @@ def set_delta_mu(signature):
     signature_lib.set_delta_mu(signature)
 
 def calculate_signature(signature, m, n):
-    return signature_lib.calculate_signature(signature, m, n).contents
+    result_ptr = signature_lib.calculate_signature(signature, m, n)
+    return np.ctypeslib.as_array(result_ptr, shape=(signature.contents.num_combinations,))

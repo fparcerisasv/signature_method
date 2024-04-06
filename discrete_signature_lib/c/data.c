@@ -7,7 +7,6 @@
 #include <stdio.h>
 
 Data *create_data(int num_times, int d) {
-    printf ("Creating data\n");
     Data *data = malloc(sizeof(Data));
     if (data == NULL) {
         return NULL;
@@ -61,7 +60,6 @@ void set_values(Data *data, double **values) {
             data->values[i][j] = values[i][j];
         }
     }
-    print_data(data);
 }
 
 void calculate_delta_X(Data *data) {

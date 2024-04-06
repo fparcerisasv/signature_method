@@ -1,20 +1,16 @@
 # main.py
 
-import classes_sig_c as sw
 
+import time
+
+import numpy as np
+import discrete_signature_lib.discrete_signature as ds  
+start_time = time.time()
 # Example data object
-data = sw.create_data(5, 2)
-times = [0, 1, 1.5, 2.5, 3]
-values = [[1, 1], [3, 4], [3, 2], [5, 2], [8, 6]]
-sw.set_times(data, times)
-sw.set_values(data, values)
-
-delta_X = sw.calculate_delta_X(data)
-# Signature object
-signature = sw.create_signature(2, data)
-print(":)")
-sw.set_mu(signature, 0.693)
-sw.set_delta_mu(signature)
-
+sig = ds.FlatDiscreteSignature(2, np.array([0, 1, 1.5, 2.5, 3]), np.array([[1, 1], [3, 4], [3, 2], [5, 2], [8, 6]], dtype=float), mu=0.693)
 # Calculate the signature
-print(sw.calculate_signature(signature, 0, 4))
+signature = sig.calculate_signature(0, 3)
+end_time = time.time()
+print(f" Execution time: {end_time - start_time:.8f}")
+
+print(f"Signature: \n {list(signature)}")
