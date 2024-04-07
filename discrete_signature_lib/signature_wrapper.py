@@ -50,6 +50,9 @@ signature_lib.set_delta_mu.restype = None
 signature_lib.calculate_signature.argtypes = [ctypes.POINTER(Signature), ctypes.c_int, ctypes.c_int]
 signature_lib.calculate_signature.restype = ctypes.POINTER(ctypes.c_double)
 
+signature_lib.get_words.argtypes = [ctypes.POINTER(Signature)]
+signature_lib.get_words.restype = ctypes.POINTER(ctypes.c_char_p)
+
 
 # Define wrapper functions for Data and Signature classes
 def create_data(num_times, d):
@@ -82,3 +85,6 @@ def set_delta_mu(signature):
 def calculate_signature(signature, m, n):
     result_ptr = signature_lib.calculate_signature(signature, m, n)
     return np.ctypeslib.as_array(result_ptr, shape=(signature.contents.num_combinations,))
+def get_words(signature):
+    strings = signature_lib.get_words(signature)
+    return [str(strings[i].decode('utf-8')) for i in range(signature.contents.num_combinations)]

@@ -121,3 +121,11 @@ void generate_combinations(Signature *signature) {
     }
     
 }
+
+char** get_words(Signature *signature){
+    char **words = malloc(signature->num_combinations * sizeof(char *));
+    for (int i = 0; i < signature->num_combinations; i++) {
+        words[i] = word_to_string(signature->words[i]);
+    }
+    return words;
+}

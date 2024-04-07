@@ -23,4 +23,5 @@ unsigned long long combinatory(int n, int k) ;
 void print_word(Word word);
 void add_index(Word *word, Word *new_word,  Index *index);
 void reset_is_calculated(Word * word);
+char* word_to_string(Word word);
 #endif

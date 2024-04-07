@@ -16,7 +16,7 @@ Word create_word_from_scratch(int length,int num_times){ // Create a word with g
     word.num_times = num_times;
     word.value = malloc(num_times * sizeof(double)); // allocate memory for n values
     word.is_calculated = malloc(num_times * sizeof(bool)); // allocate memory for n booleans
-    reset_is_calculated(&word);
+    //reset_is_calculated(&word);
     return word;
 }
 
@@ -45,6 +45,21 @@ void print_word(Word word){
     }
     printf("\' ");
 };
+char* word_to_string(Word word){
+    char *str = malloc(2*word.length * sizeof(char));
+    if (str == NULL){
+        printf("Error allocating memory\n");
+        return NULL;
+    }
+    if (word.length == 0){
+        sprintf(str,"%s", " ");
+    }
+    for(int i = 0; i<word.length; i++){
+        sprintf(str + 2*i,"%d", word.indexes[i]->i);
+        sprintf(str + 2*i + 1,"%s", word.indexes[i]->head ? "-" : "+");
+    }
+    return str;
+}
 
 void add_index(Word *word,Word *new_word, Index *index){ // Creates new word from indexes from previous word
     if (word == NULL){
