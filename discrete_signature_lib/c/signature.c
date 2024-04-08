@@ -16,11 +16,12 @@ Signature *create_signature(int k, Data *data) {
     signature->delta_mu = NULL;
     signature->words = NULL;
 
+    
     // Init words
     create_words(signature); // Create words
 
     generate_combinations(signature); // Generate all possible combinations
-    
+
     return signature;
 }
 
@@ -65,11 +66,11 @@ double signature_helper(Signature *signature, int n,int m,Word *word)
 
     
 
-    if (word->indexes[word->length - 1]->head) { // If the last index is a head
+    if (word->indexes[word->length - 1].head) { // If the last index is a head
         word->value[n] = signature->delta_mu[n-1] * (signature_helper(signature,n-1,m,word) + 
-                                signature->data->delta_X[n-1][word->indexes[word->length - 1]->i] * signature_helper(signature,n-1,m,&signature->words[word->prev_word_index]));
+                                signature->data->delta_X[n-1][word->indexes[word->length - 1].i] * signature_helper(signature,n-1,m,&signature->words[word->prev_word_index]));
     } else {
-        word->value[n] = signature->delta_mu[n-1] * signature_helper(signature,n-1,m,word) + signature->data->delta_X[n-1][word->indexes[word->length - 1]->i] * signature_helper(signature,n,m,&signature->words[word->prev_word_index]);
+        word->value[n] = signature->delta_mu[n-1] * signature_helper(signature,n-1,m,word) + signature->data->delta_X[n-1][word->indexes[word->length - 1].i] * signature_helper(signature,n,m,&signature->words[word->prev_word_index]);
     }
          word->is_calculated[n] = true;
         return word->value[n];
@@ -81,7 +82,7 @@ double signature_helper(Signature *signature, int n,int m,Word *word)
 /***INTIALIZE WORDS***/
 void create_words(Signature *signature){
 
-    signature->num_combinations = combinatory(2*signature->d + signature->k +1 ,signature->k); // calculate number of combinations
+    signature->num_combinations = combinatory(2*signature->d,signature->k); // calculate number of combinations
     signature->words = (Word *) malloc(signature->num_combinations * sizeof(Word )); // allocate memory for words
     signature->possible_indexes = malloc(2*signature->d * sizeof(Index)); // allocate memory for possible indexes
     for (int i = 0; i < signature->d; i++) { // set possible indexes
@@ -110,7 +111,7 @@ void generate_combinations(Signature *signature) {
     for (int length =  0; length < signature->k; length++) {
         for (int i=first;i<last;i++){
             for (int j = 0;j<2*signature->d;j++){
-                add_index(&signature->words[i], &signature->words[index], &signature->possible_indexes[j]);
+                add_index(&signature->words[i], &signature->words[index], signature->possible_indexes[j]);
                 signature->words[index].prev_word_index = i;
 
                 index++;

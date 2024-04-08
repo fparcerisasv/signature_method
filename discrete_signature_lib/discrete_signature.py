@@ -1,6 +1,12 @@
 
 import numpy as np
-from discrete_signature_lib import signature_wrapper as sw
+import sys
+import os
+import importlib.util
+spec = importlib.util.spec_from_file_location("signature_wrapper", os.path.join(os.path.dirname(__file__), "./signature_wrapper.py"))
+sw = importlib.util.module_from_spec(spec)
+sys.modules['signature_wrapper'] = sw
+spec.loader.exec_module(sw)
 class FlatDiscreteSignature:
     '''
     Class for computing the flat discrete signature of a given data object
@@ -12,18 +18,19 @@ class FlatDiscreteSignature:
         array of values
     mu : float
     '''
-    def __init__(self,k,timestamps,values, mu = 1): 
+    def __init__(self,k,timestamps,values, mu = 0): 
         self.k = k
         self.timestamps = timestamps
         self.values = values
 
-        if len(self.timestamps) != len(self.values):
+
+        if timestamps.shape[0] != values.shape[0]:
             print("The number of timestamps and values should be the same.")
             return None
-        if len(self.timestamps) == 0:
+        if timestamps.shape[0] == 0:
             print("The array of timestamps is empty.")
             return None
-        if len(self.values) == 0:
+        if values.shape[0] == 0:
             print("The array of values is empty.")
             return None
         if np.isnan(self.timestamps).any() or np.isnan(self.values).any():
@@ -36,8 +43,9 @@ class FlatDiscreteSignature:
         
 
     def create_data(self):
-
-        data = sw.create_data(len(self.timestamps), len(self.values[0])) 
+        if len(self.values.shape) == 1:
+            self.values = np.expand_dims(self.values, axis = 1)
+        data = sw.create_data(self.values.shape[0], self.values.shape[1]) 
         sw.set_times(data, self.timestamps)
         sw.set_values(data, self.values)
         sw.calculate_delta_X(data)
@@ -67,8 +75,8 @@ class FlatDiscreteSignature:
     '''
     
     def calculate_signature(self, t_m, t_n):
-        m = np.where(self.timestamps == t_m)[0][0]
-        n = np.where(self.timestamps == t_n)[0][0]
+        m = np.argmin(np.abs(self.timestamps - t_m))
+        n = np.argmin(np.abs(self.timestamps - t_n))
         return sw.calculate_signature(self.signature, m, n)
 
     '''
@@ -92,4 +100,13 @@ def ffill_roll(arr, fill=0, axis=0):
         arr[mask] = replaces[mask]
         mask = np.isnan(arr)
         replaces = np.roll(replaces, 1, axis)
+    return arr
+
+
+def ffill_loop(arr, fill=0):
+    mask = np.isnan(arr[0])
+    arr[0][mask] = fill
+    for i in range(1, len(arr)):
+        mask = np.isnan(arr[i])
+        arr[i][mask] = arr[i - 1][mask]
     return arr
