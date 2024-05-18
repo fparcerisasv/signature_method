@@ -8,6 +8,7 @@ from sklearn.ensemble import RandomForestClassifier
 from sklearn.model_selection import train_test_split
 import pandas as pd
 import os
+from sklearn.metrics import roc_auc_score,average_precision_score
 def build_dataset(num_samples,dataset_size):
     X = []
     y = []
@@ -22,10 +23,6 @@ def build_dataset(num_samples,dataset_size):
         X.append(values)
         y.append("Lognormal")
 
-        shape = np.random.uniform(0.5,10)
-        timestamps,values=generate_data(num_samples,"gamma",(2,shape))
-        X.append(values)
-        y.append("Gamma")
     return X,y,timestamps
 
 def get_results(k,n_estimators,test_size,num_samples,dataset_size):
@@ -73,33 +70,35 @@ def get_results(k,n_estimators,test_size,num_samples,dataset_size):
     start_time = time.time()
     clf_pca.fit(X_train_pca, y_train)
     time3 = time.time() - start_time
+    auc_roc1 = roc_auc_score(y_test,clf.predict_proba(X_test)[:,1])
+    auc_roc2 = roc_auc_score(y_test_sig,clf_sig.predict_proba(X_test_sig)[:,1])
+    auc_roc3 = roc_auc_score(y_test,clf_pca.predict_proba(X_test_pca)[:,1])
+    auc_pr1 = average_precision_score(y_test,clf.predict_proba(X_test)[:,1],pos_label="Exponential")
+    auc_pr2 = average_precision_score(y_test_sig,clf_sig.predict_proba(X_test_sig)[:,1],pos_label="Exponential")
+    auc_pr3 = average_precision_score(y_test,clf_pca.predict_proba(X_test_pca)[:,1],pos_label="Exponential")
+    return {"raw":{"auc_roc":auc_roc1,"auc_pr":auc_pr1,"time":time1},"signature":{"auc_roc":auc_roc2,"auc_pr":auc_pr2,"time":time2},"pca":{"auc_roc":auc_roc3,"auc_pr":auc_pr3,"time":time3}}
 
-    return {"raw":{"score":clf.score(X_test,y_test),"time":time1},"signature":{"score":clf_sig.score(X_test_sig,y_test_sig),"time":time2},"pca":{"score":clf_pca.score(X_test_pca,y_test),"time":time3}}
 def save_results(results,raw_csv_path):
     results_df = pd.DataFrame(results)
     results_df.to_csv(raw_csv_path)
 
 def main():
-    ks = [4,5]
-    num_sampleses = [100,1000,10000]
-    dataset_sizes = [100,1000,10000]
+    ks = [2,3,4,5]
+    num_samples =  10000
+    dataset_size = 10000
     n_estimators = 100
     test_size = 0.2
     num_experiments = 25
     for k in ks:
-        for num_samples in num_sampleses:
-            for dataset_size in dataset_sizes:
-                if num_samples >= 1000 and dataset_size == 10000:
-                    break
-                directory = f"experimental_results/k_{k}_num_samples_{num_samples}_dataset_size_{dataset_size}"
-                if not os.path.exists(directory):
-                    os.makedirs(directory)
-                results = {"raw":[],"signature":[],"pca":[]}
-                for i in tqdm(range(num_experiments),f"k = {k}, num_samples = {num_samples}, dataset_size = {dataset_size}"):
-                    results_ = get_results(k,n_estimators,test_size,num_samples,dataset_size)
-                    results["raw"].append(results_["raw"])
-                    results["signature"].append(results_["signature"])
-                    results["pca"].append(results_["pca"])
+            directory = f"experimental_results/k_{k}_num_samples_{num_samples}_dataset_size_{dataset_size}"
+            if not os.path.exists(directory):
+                os.makedirs(directory)
+            results = {"raw":[],"signature":[],"pca":[]}
+            for i in tqdm(range(num_experiments),f"k = {k}, num_samples = {num_samples}, dataset_size = {dataset_size}"):
+                results_ = get_results(k,n_estimators,test_size,num_samples,dataset_size)
+                results["raw"].append(results_["raw"])
+                results["signature"].append(results_["signature"])
+                results["pca"].append(results_["pca"])
                 raw_csv_path = f"{directory}/raw_results.csv"
                 save_results(results["raw"],raw_csv_path)
                 signature_csv_path = f"{directory}/signature_results.csv"

@@ -7,14 +7,14 @@ import time
 import pandas as pd
 import tqdm
 def make_experiment(k):
-    timestamps = generate_timestamps(0, 5, 0.1)
+    timestamps = generate_timestamps(0, 5, 0.25)
     target_scale = np.random.uniform(0.5,4)
     initial_guess = np.random.uniform(0.5,4)
-    times,target = generate_data(10000,"exp",target_scale,start= 0,end = 10, step = 0.1) #target signature
-    target_sig = ds.FlatDiscreteSignature(values = target,timestamps = times, k=k).calculate_signature(0,10)
+    times,target = generate_data(10000,"exp",target_scale,start= 0,end = 5, step = 0.1) #target signature
+    target_sig = ds.FlatDiscreteSignature(values = target,timestamps = times, k=k).calculate_signature(0,5)
     def exp_sig(s):
         vals = generate_values(timestamps,expon(scale = s).pdf)
-        vals = ds.ffill_roll(vals)
+        vals = ds.ffill_loop(vals)
         signature = ds.FlatDiscreteSignature(values = vals,timestamps = timestamps, k =k)
         return signature.calculate_signature(0,5)
     def diff(s):
@@ -27,8 +27,8 @@ def make_experiment(k):
     start = time.time()
     popt, pcov = curve_fit(exp_pdf,times,target,p0 = initial_guess)
     time2 = time.time() - start
-    error1 = (target_scale - res.x[0])**2
-    error2 = (target_scale - popt[0])**2
+    error1 = abs((target_scale - res.x[0])/target_scale)
+    error2 = abs((target_scale - popt[0])/target_scale)
     return error1,error2,time1,time2
 
 def main():
@@ -52,7 +52,12 @@ def main():
         mean_errors[k].append(np.mean(errors2))
         mean_times[k].append(np.mean(times1))
         mean_times[k].append(np.mean(times2))
-    print(mean_errors )
-    print(mean_times)
+    
+    print("Errors")
+    print("Signature",{k:mean_errors[k][0] for k in kas})
+    print("Curve Fit",{k:mean_errors[k][1] for k in kas})
+    print("Times")
+    print("Signature",{k:mean_times[k][0] for k in kas})
+    print("Curve Fit",{k:mean_times[k][1] for k in kas})
 if __name__ == "__main__":
     main()
