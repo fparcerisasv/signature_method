@@ -19,6 +19,7 @@ class FlatDiscreteSignature:
     mu : float
     '''
     def __init__(self,k,timestamps,values, mu = 0): 
+
         self.k = k
         self.timestamps = timestamps
         self.values = values

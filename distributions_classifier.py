@@ -9,6 +9,8 @@ from sklearn.model_selection import train_test_split
 import pandas as pd
 import os
 from sklearn.metrics import roc_auc_score,average_precision_score
+from sklearn.preprocessing import StandardScaler
+
 def build_dataset(num_samples,dataset_size):
     X = []
     y = []
@@ -34,6 +36,7 @@ def get_results(k,n_estimators,test_size,num_samples,dataset_size):
     #Training with raw data
     X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=test_size, random_state=0) #splitting the data into train and test
 
+    
     start_time = time.time()
     clf.fit(X_train, y_train)
     time1 = time.time() - start_time
@@ -57,6 +60,10 @@ def get_results(k,n_estimators,test_size,num_samples,dataset_size):
             X_test_sig.append(sig)
             y_test_sig.append(y_test[i])
 
+    from sklearn.preprocessing import StandardScaler
+    scaler = StandardScaler()
+    X_train_sig = scaler.fit_transform(X_train_sig)
+    X_test_sig = scaler.transform(X_test_sig)
 
     start_time = time.time()
 

@@ -33,7 +33,8 @@ def generate_samples(num_samples,distribution,param,noise = 0):
 
 def generate_data(num_samples,distribution,param,noise = 0,start = 0,end = 10,step = 0.1):
     samples = generate_samples(num_samples,distribution,param,noise)
-    hist, bins = np.histogram(samples, bins = int((end-start)/step), density = True)
+    hist, bins = np.histogram(samples, bins = int((end-start)/step))
+    hist = hist/np.sum(hist)
     return bins[:-1],hist
 
 
